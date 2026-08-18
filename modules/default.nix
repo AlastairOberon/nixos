@@ -10,6 +10,7 @@
     ./applications.nix
     ./fonts.nix
     ./portals.nix
+    ./keyd.nix
     ./hardware/gpu-nvidia-legacy.nix
   ];
 }
