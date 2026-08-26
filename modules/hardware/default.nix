@@ -8,8 +8,8 @@ let
         let
           type = files.${name};
         in
-          (type == "regular" && name != "default.nix" && builtins.match ".*\\.nix" name != null) ||
-          (type == "directory" && builtins.pathExists (dir + "/${name}/default.nix"))
+          (type == "regular" && name != "default.nix" && builtins.match "[^_].*\\.nix" name != null) ||
+          (type == "directory" && builtins.pathExists (dir + "/${name}/default.nix") && builtins.match "[^_].*" name != null)
       ) (builtins.attrNames files);
     in
       builtins.map (name: dir + "/${name}") toImport;

@@ -9,13 +9,17 @@ let
     if builtins.pathExists configsDir then
       let
         dirContents = builtins.readDir configsDir;
-        subDirs = builtins.filter (name: dirContents.${name} == "directory") (builtins.attrNames dirContents);
+        subDirs = builtins.filter (name: 
+          dirContents.${name} == "directory" && 
+          builtins.match "[^_].*" name != null
+        ) (builtins.attrNames dirContents);
         getEntryPoint = dirName:
           let
             subDirPath = configsDir + "/${dirName}";
             subDirContents = builtins.readDir subDirPath;
             nixFiles = builtins.filter (fileName:
-              builtins.match ".*_main\\.nix" fileName != null || fileName == "default.nix"
+              (builtins.match ".*_main\\.nix" fileName != null || fileName == "default.nix") &&
+              builtins.match "[^_].*" fileName != null
             ) (builtins.attrNames subDirContents);
           in
             if nixFiles == [] then
@@ -36,8 +40,8 @@ let
           let
             type = files.${name};
           in
-            (type == "regular" && name != "default.nix" && builtins.match ".*\\.nix" name != null) ||
-            (type == "directory" && builtins.pathExists (dir + "/${name}/default.nix"))
+            (type == "regular" && name != "default.nix" && builtins.match "[^_].*\\.nix" name != null) ||
+            (type == "directory" && builtins.pathExists (dir + "/${name}/default.nix") && builtins.match "[^_].*" name != null)
         ) (builtins.attrNames files);
       in
         builtins.map (name: dir + "/${name}") toImport
