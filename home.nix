@@ -52,6 +52,9 @@ in
   home.username = "alastair_oberon";
   home.homeDirectory = "/home/alastair_oberon";
 
+  # Automatically back up existing files that would be clobbered by Home Manager
+  home.backupFileExtension = "backup";
+
   imports = configImports ++ (importDirIfExists ./flake_apps);
 
   # You can move user-specific packages out of applications.nix and into here later!
