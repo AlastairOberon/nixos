@@ -27,5 +27,8 @@ in
   # Allow unfree packages globally
   nixpkgs.config.allowUnfree = true;
 
+  # Automatically back up existing files that would be clobbered by Home Manager
+  home-manager.backupFileExtension = "backup";
+
   system.stateVersion = "26.05";
 }
