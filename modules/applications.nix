@@ -6,24 +6,94 @@
         ./flake/alcom.nix
         ./flake/unityHub.nix
         ./flake/podman.nix
+        ./flake/thunar.nix
+        ./flake/yazi.nix
+        ./flake/herdr.nix
         ./customBuilds/customBuilds.nix
     ];
 
     programs.hyprland.enable = true;
     environment.sessionVariables.NIXOS_OZONE_WL = "1";
     programs.dconf.enable = true;
+    services.netbird.enable = true;
+    services.passSecretService.enable = true;
 
     environment.systemPackages = with pkgs; [
-        inputs.zen-browser.packages.${pkgs.stdenv.hostPlatform.system}.default
-        # Hyprland Ecosystem & GUI Apps
+        #Flake inputs
+        inputs.spotx.packages.${pkgs.stdenv.hostPlatform.system}.spotify-spotx
+
+        #Hardware
+        brightnessctl
+        playerctl
+        wireplumber
+        pass
+        pkgs.lenovo-legion
+
+        #Dev & Programming
+        gcc
+        gnumake
+        git
+        stow
+        go
+        gopls
+        python3
+        uv
+        nodejs_22
+        netbird-ui
+        netbird
+
+        #CLI
+        ghostty
+        neovim
+        micro
+        fastfetch
+        btop
+        htop
+        ripgrep
+        fzf
+        zoxide
+        starship
+        atuin
+        yt-dlp
+        wget
+        tree
+        imagemagick
+        snapper
+        exiftool
+        cliamp
+
+        #hyprland
         hyprpaper
         hyprlock
         hyprshot
+        hyprpolkitagent
         waypaper
         rofi
         cliphist
+        wl-clipboard
+        quickshell
+        nwg-look
+        adwaita-icon-theme
+        gnome-themes-extra
+        qt6.qtwayland
+        qt6.qtdeclarative
+        qt6.qt5compat
+
+        #File Management
+        engrampa
+        btrfs-assistant
+        zip
+        unzip
+        p7zip
+        unrar
+        xz
+        zstd
+        gzip
+        bzip2
+        gnutar
+
+        #GUI
         firefox
-        thunar
         vesktop
         calibre
         inkscape
@@ -33,42 +103,6 @@
         qbittorrent
         retroarch
         easyeffects
-        quickshell
-        qt6.qtwayland
-        qt6.qtdeclarative
-        gnome-themes-extra
-        adwaita-icon-theme
-        nwg-look
-        imagemagick
-        stow
-
-        # CLI & Terminal Utilities
-        ghostty
-        neovim
-        micro
-        git
-        fzf
-        fastfetch
-        btop
-        htop
-        ripgrep
-        yazi
-        yt-dlp
-        starship
-        zoxide
-        atuin
-        wl-clipboard
-        wget
-        unzip
-        zip
-        btrfs-assistant
-        snapper
-        tree
-        nodejs_22
-        go
-        python3
-        gcc
-        gopls
-        uv
+        overskride
     ];
 }
