@@ -1,7 +1,6 @@
 { ... }:
 
 let
-  # Helper to auto-import all .nix files and valid subdirectories in a directory
   autoImport = dir:
     let
       files = builtins.readDir dir;

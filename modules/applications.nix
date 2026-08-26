@@ -1,17 +1,6 @@
 { pkgs, inputs, ... }:
 
 {
-    imports = [
-        ./flake/zenBrowser.nix
-        ./flake/alcom.nix
-        ./flake/unityHub.nix
-        ./flake/podman.nix
-        ./flake/thunar.nix
-        ./flake/yazi.nix
-        ./flake/herdr.nix
-        ./customBuilds/customBuilds.nix
-    ];
-
     programs.hyprland.enable = true;
     environment.sessionVariables.NIXOS_OZONE_WL = "1";
     programs.dconf.enable = true;
