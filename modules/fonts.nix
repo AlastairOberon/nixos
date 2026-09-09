@@ -34,5 +34,6 @@
     nerd-fonts.ubuntu
     nerd-fonts.victor-mono
     nerd-fonts.zed-mono
+    nerd-fonts.monofur
   ];
 }

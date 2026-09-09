@@ -1,11 +1,32 @@
 { pkgs, inputs, ... }:
 
 {
+    programs.nix-ld.enable = true;
     programs.hyprland.enable = true;
     environment.sessionVariables.NIXOS_OZONE_WL = "1";
     programs.dconf.enable = true;
     services.netbird.enable = true;
     services.passSecretService.enable = true;
+    services.playerctld.enable = true;
+
+    # Native NixOS systemd user service
+    systemd.user.services.vdirsyncer = {
+        description = "Synchronize CalDAV calendars";
+        serviceConfig = {
+            Type = "oneshot";
+            ExecStart = "${pkgs.vdirsyncer}/bin/vdirsyncer sync";
+        };
+    };
+
+    systemd.user.timers.vdirsyncer = {
+        description = "Timer for vdirsyncer";
+        wantedBy = [ "timers.target" ];
+        timerConfig = {
+            OnBootSec = "5m";
+            OnUnitActiveSec = "15m";
+            Unit = "vdirsyncer.service";
+        };
+    };
 
     environment.systemPackages = with pkgs; [
         #Flake inputs
@@ -30,6 +51,11 @@
         nodejs_22
         netbird-ui
         netbird
+        openssl
+        qrencode
+        libnotify
+        file
+        vdirsyncer
 
         #CLI
         ghostty
@@ -39,6 +65,7 @@
         btop
         htop
         ripgrep
+        aria2
         fzf
         zoxide
         starship
@@ -50,6 +77,20 @@
         snapper
         exiftool
         cliamp
+        cava
+        wiremix
+        ani-cli
+        wl-clipboard
+        cliphist
+        wayshot
+        slurp
+        grim
+        libwebp
+        gallery-dl
+        satty
+        spotify-player
+        khal
+        lazygit
 
         #hyprland
         hyprpaper
@@ -80,6 +121,7 @@
         gzip
         bzip2
         gnutar
+        file-roller
 
         #GUI
         firefox
@@ -93,5 +135,7 @@
         retroarch
         easyeffects
         overskride
+        onlyoffice-desktopeditors
+        prismlauncher
     ];
 }

@@ -1,0 +1,36 @@
+{ pkgs, ... }:
+
+{
+  # Import your isolated service configurations
+
+  # Enable common container config files in /etc/containers
+  virtualisation.containers.enable = true;
+
+  virtualisation.podman = {
+    enable = true;
+    
+    # Create a 'docker' alias for podman and mimic the Docker API socket
+    dockerCompat = true;
+    
+    # Required for containers under compose to talk to each other
+    defaultNetwork.settings.dns_enabled = true;
+
+    # Automatically prune unused images and containers weekly
+    autoPrune.enable = true;
+    autoPrune.dates = "weekly";
+  };
+
+  # Enable the NVIDIA Container Toolkit for GPU passthrough via CDI
+  hardware.nvidia-container-toolkit.enable = true;
+
+  environment.systemPackages = with pkgs; [
+    docker-compose # Using official compose for better socket compatibility
+    podman-tui     # Terminal UI for managing containers
+    dive           # Tool to explore container image layers
+  ];
+  
+  imports = [
+      ./podmanRunningServices/sillytavern_compose.nix
+      ./podmanRunningServices/searxng_compose.nix
+  ];
+}

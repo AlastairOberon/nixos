@@ -1,0 +1,178 @@
+format = """
+[](color12)\
+$hostname\
+[](fg:color12 bg:color0)\
+$username\
+[](fg:color0 bg:color4)\
+$time\
+[](color4)\
+$line_break\
+[](color5)\
+$directory\
+[](fg:color5 bg:color9)\
+$git_branch\
+[](fg:color9)\
+$git_status\
+$fill\
+[](color12)\
+$c\
+$cpp\
+$golang\
+$elixir\
+$elm\
+$gradle\
+$haskell\
+$java\
+$julia\
+$nim\
+$rust\
+$scala\
+$lua\
+$python\
+$nodejs\
+$docker_context\
+$jobs\
+$cmd_duration\
+[ ](color12)\
+$line_break\
+$character"""
+
+palette = "pywal"
+
+[username]
+show_always = false
+style_user = "bg:color0 fg:color12"
+style_root = "bg:color0 fg:color12"
+format = '[ $user ]($style)'
+disabled = false
+
+[hostname]
+ssh_only = true
+style = 'bg:color12 fg:color0'
+format = '[ $ssh_symbol$hostname ]($style)'
+disabled = false
+
+[fill]
+style = 'color12'
+symbol = '+--'
+
+[directory]
+style = 'bg:color5 fg:background'
+format = '[$path]($style)[$read_only]($read_only_style)'
+truncation_length = 3
+truncation_symbol = '.../'
+
+[git_branch]
+symbol = ""
+style = 'bg:color9 fg:background'
+format = '[ $symbol $branch(:$remote_branch)]($style)'
+
+[git_status]
+style = 'color9'
+
+[python]
+style = "bg:color12 fg:background"
+symbol = ''
+format = '[${{symbol}} ${{pyenv_prefix}}(${{version}} )(\(${{virtualenv}}\) )]($style)'
+pyenv_version_name = true
+pyenv_prefix = ""
+
+[time]
+style = "bg:color4 fg:background"
+disabled = false
+format = '[ $time ]($style)'
+time_format = '%R'
+
+[cmd_duration]
+style = "bg:color12 fg:background"
+format = '[took $duration]($style)'
+
+[c]
+symbol = " "
+style = "bg:color12 fg:background"
+format = '[ $symbol ($version) ]($style)'
+
+[cpp]
+symbol = " "
+style = "bg:color12 fg:background"
+format = '[ $symbol ($version) ]($style)'
+
+[docker_context]
+symbol = " "
+style = "bg:color12 fg:background"
+format = '[ $symbol $context ]($style)'
+
+[elixir]
+symbol = " "
+style = "bg:color12 fg:background"
+format = '[ $symbol ($version) ]($style)'
+
+[elm]
+symbol = " "
+style = "bg:color12 fg:background"
+format = '[ $symbol ($version) ]($style)'
+
+[golang]
+symbol = " "
+style = "bg:color12 fg:background"
+format = '[ $symbol ($version) ]($style)'
+
+[gradle]
+style = "bg:color12 fg:background"
+format = '[ $symbol ($version) ]($style)'
+
+[haskell]
+symbol = " "
+style = "bg:color12 fg:background"
+format = '[ $symbol ($version) ]($style)'
+
+[java]
+symbol = " "
+style = "bg:color12 fg:background"
+format = '[ $symbol ($version) ]($style)'
+
+[julia]
+symbol = " "
+style = "bg:color12 fg:background"
+format = '[ $symbol ($version) ]($style)'
+
+[nodejs]
+symbol = ""
+style = "bg:color12 fg:background"
+format = '[ $symbol ($version) ]($style)'
+
+[nim]
+symbol = "󰆥 "
+style = "bg:color12 fg:background"
+format = '[ $symbol ($version) ]($style)'
+
+[rust]
+symbol = ""
+style = "bg:color12 fg:background"
+format = '[ $symbol ($version) ]($style)'
+
+[scala]
+symbol = " "
+style = "bg:color12 fg:background"
+format = '[ $symbol ($version) ]($style)'
+
+# --- DYNAMIC PYWAL PALETTE ---
+[palettes.pywal]
+color0 = "{color0}"
+color1 = "{color1}"
+color2 = "{color2}"
+color3 = "{color3}"
+color4 = "{color4}"
+color5 = "{color5}"
+color6 = "{color6}"
+color7 = "{color7}"
+color8 = "{color8}"
+color9 = "{color9}"
+color10 = "{color10}"
+color11 = "{color11}"
+color12 = "{color12}"
+color13 = "{color13}"
+color14 = "{color14}"
+color15 = "{color15}"
+background = "{background}"
+foreground = "{foreground}"

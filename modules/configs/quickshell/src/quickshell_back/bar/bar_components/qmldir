@@ -1,0 +1,8 @@
+singleton Theme Theme.qml
+singleton PopupManager PopupManager.qml
+BlueprintPopup BlueprintPopup.qml
+CalendarPopup clock/CalendarPopup.qml
+singleton NotificationDaemon notifications/NotificationDaemon.qml
+NotificationPopup notifications/NotificationPopup.qml
+NotificationToast notifications/NotificationToast.qml
+NotificationIndicator notifications/NotificationIndicator.qml

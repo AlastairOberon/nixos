@@ -1,0 +1,16 @@
+[[mgr.prepend_keymap]]
+on   = [ "D" ]
+run  = '''shell 'dragon -x "$@"' --confirm'''
+desc = "Drag and drop"
+
+# Open the current directory in Neovim (blocks Yazi until you exit Nvim)
+[[mgr.prepend_keymap]]
+on   = [ "<C-e>" ]
+run  = '''shell 'nvim .' --block --confirm'''
+desc = "Open current directory in Neovim"
+
+# Open the current directory in Thunar (runs in background)
+[[mgr.prepend_keymap]]
+on   = [ "<C-w>" ]
+run  = '''shell 'thunar . &' --confirm'''
+desc = "Open current directory in Thunar"

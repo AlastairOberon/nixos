@@ -1,15 +1,35 @@
 { pkgs, ... }:
 
 {
+  # --- PORTALS ---
   xdg.portal = {
     enable = true;
-    
-    # Add the GTK portal (which Zenity and Steam desperately want)
-    extraPortals = with pkgs; [
-      xdg-desktop-portal-gtk
+    extraPortals = [
+      pkgs.xdg-desktop-portal-gtk
+      pkgs.xdg-desktop-portal-hyprland
     ];
+    config = {
+      common.default = [ "gtk" ];
+      hyprland.default = [ "hyprland" "gtk" ];
+    };
+  };
 
-    # Set default portal behaviors
-    config.common.default = "*";
+  # --- SYSTEMD SESSION INTEGRATION ---
+  systemd.user.targets.hyprland-session = {
+    description = "Hyprland session";
+    documentation = [ "man:systemd.special(7)" ];
+    bindsTo = [ "graphical-session.target" ];
+    wants = [ "graphical-session-pre.target" ];
+    after = [ "graphical-session-pre.target" ];
+  };
+
+  # --- AUDIO / PIPEWIRE ---
+  security.rtkit.enable = true;
+  services.pipewire = {
+    enable = true;
+    alsa.enable = true;
+    alsa.support32Bit = true;
+    pulse.enable = true;
+    wireplumber.enable = true;
   };
 }

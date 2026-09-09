@@ -1,0 +1,278 @@
+import QtQuick
+import Quickshell.Wayland
+import QtQuick.Layouts
+import QtQuick.Controls
+import Quickshell.Widgets
+import Quickshell
+import QtQuick.Effects 
+
+import "../../../theme" 
+import "../../../theme/components" 
+
+Template_Floating {
+    id              : launcherWindow
+    windowWidth     : 1080
+    windowHeight    : 720
+    visible         : false
+    focusable       : true
+
+    property string searchQuery: ""
+    WlrLayershell.namespace: "quickshell"
+
+    onVisibleChanged: {
+        if (visible) {
+            searchQuery = ""
+            searchInput.text = ""
+            searchInput.forceActiveFocus()
+            
+            // <--- HIGHLIGHT FIX 1 --->
+            // Resets the highlight to "nothing" when you open the window
+            appList.currentIndex = -1 
+        }
+    }
+
+    // ==========================================
+    // THEMED BACKGROUND PATTERN
+    // ==========================================
+    
+    // Rectangle {
+    //     id: patternColor
+    //     anchors.fill: parent
+    //     color: Theme.secondary
+    //     radius: 24 
+    //     visible: false 
+    // }
+    //
+    // Item {
+    //     id: maskContainer
+    //     anchors.fill: parent
+    //     visible: false
+    //     layer.enabled: true 
+    //
+    //     Image {
+    //         anchors.centerIn: parent
+    //         width: parent.width * 1.03
+    //         height: parent.height * 1.03
+    //         source: "../../../assets/starchart.png" 
+    //         fillMode: Image.PreserveAspectCrop
+    //     }
+    // }
+    //
+    // MultiEffect {
+    //     anchors.fill: parent
+    //     source: patternColor
+    //     maskEnabled: true
+    //     maskSource: maskContainer
+    //     opacity: 0.4 
+    // }
+    // ==========================================
+
+
+    ColumnLayout {
+        anchors.fill    : parent
+        spacing         : Metrics.spacingLarge
+        anchors.topMargin: Metrics.spacingLarge
+        anchors.bottomMargin: Metrics.spacingLarge
+
+        RowLayout {
+            Layout.fillWidth    : true
+            Layout.leftMargin   : Metrics.spacingLarge
+            Layout.rightMargin  : Metrics.spacingLarge
+            spacing             : Metrics.spacingLarge
+
+            Rectangle {
+                Layout.preferredWidth   : 80
+                Layout.preferredHeight  : 80
+                radius                  : Metrics.radiusBase
+                color                   : Theme.main
+
+                Item {
+                    anchors.centerIn    : parent
+                    width               : 75
+                    height              : 75 
+
+                    Image {
+                        id                  : jellyFishDungeon
+                        source              : "../../../assets/JellyfishDungeon.svg"
+                        anchors.fill        : parent
+                        sourceSize.width    : width
+                        sourceSize.height   : height
+                        fillMode            : Image.PreserveAspectFit
+                        visible             : true
+                    }
+                }
+            }
+
+            TextField {
+                id                      : searchInput
+                Layout.fillWidth        : true
+                Layout.preferredHeight  : 75   
+                placeholderText         : "Search applications..."
+                color                   : Theme.text
+                
+                font.family             : Theme.fontMain   
+                font.pixelSize          : 32   
+                
+                verticalAlignment       : TextInput.AlignVCenter
+                
+                background : Rectangle {
+                    color           : Qt.darker(Theme.base, 1.2)
+                    radius          : Metrics.radiusBase
+                    border.width    : 0
+                    border.color    : "transparent"
+                    
+                    Behavior on border.color { 
+                        ColorAnimation { duration: Metrics.animFast }
+                    }
+                    
+                    MouseArea {
+                        id                  : searchInputMouse
+                        anchors.fill        : parent
+                        hoverEnabled        : true
+                        acceptedButtons     : Qt.NoButton 
+                    }
+                }
+                
+                onTextChanged: {
+                    launcherWindow.searchQuery = text.toLowerCase()
+                    
+                    // <--- HIGHLIGHT FIX 2 --->
+                    // Removes highlight while typing so the list stays clean
+                    appList.currentIndex = -1 
+                }
+                
+                // <--- HIGHLIGHT FIX 3 --->
+                // Arrow keys now gracefully handle the -1 state
+                Keys.onDownPressed: {
+                    if (appList.currentIndex < 0) {
+                        appList.currentIndex = 0; // Jump to first item
+                    } else {
+                        appList.currentIndex = Math.min(appList.currentIndex + 1, appList.count - 1);
+                    }
+                }
+                Keys.onUpPressed: {
+                    if (appList.currentIndex <= 0) {
+                        appList.currentIndex = appList.count - 1; // Wrap to the bottom
+                    } else {
+                        appList.currentIndex = Math.max(appList.currentIndex - 1, 0);
+                    }
+                }
+                Keys.onReturnPressed: {
+                    // Smart Fallback: If you just typed a search and hit Enter without using arrows,
+                    // it will assume you want the 1st search result!
+                    const targetIndex = appList.currentIndex >= 0 ? appList.currentIndex : 0;
+                    const currentApp = appList.model.values[targetIndex]
+                    
+                    if (currentApp) {
+                        currentApp.execute()
+                        launcherWindow.visible = false
+                    }
+                }
+                Keys.onEscapePressed: launcherWindow.visible = false
+            }
+        }
+
+        FadedList {
+            id: appList
+            Layout.fillWidth: true
+            Layout.fillHeight: true
+            spacing: Metrics.spacingSmall
+            Layout.leftMargin: Metrics.spacingLarge
+            Layout.rightMargin: Metrics.spacingLarge
+            Layout.topMargin: 20
+            Layout.bottomMargin: 20
+            
+            model: {
+                const allApps = DesktopEntries.applications.values
+                const query = launcherWindow.searchQuery.trim()
+                
+                if (query === "") return allApps
+                
+                return allApps.filter(app => {
+                    const inName = app.name && app.name.toLowerCase().includes(query);
+                    const inGeneric = app.genericName && app.genericName.toLowerCase().includes(query);
+                    const inComment = app.comment && app.comment.toLowerCase().includes(query);
+                    
+                    return inName || inGeneric || inComment;
+                })
+            }
+            
+            delegate: ThemeButton {
+                id: delegateRoot 
+                required property int index
+                required property var modelData
+
+                width: appList.width - (Metrics.spacingBase * 2)
+                height: 80 
+                selected: appList.currentIndex === index
+                
+                color: delegateRoot.isActive ? Theme.main : "transparent"
+                border.width: 0
+                border.color: "transparent"
+                
+                // <--- HIGHLIGHT FIX 4 --->
+                // Allows the mouse hover to dynamically grab the keyboard highlight index!
+                HoverHandler {
+                    onHoveredChanged: {
+                        if (hovered) appList.currentIndex = index
+                    }
+                }
+                
+                onClicked: {
+                    modelData.execute()
+                    launcherWindow.visible = false
+                }
+
+                RowLayout {
+                    id: contentRow 
+                    anchors.fill: parent
+                    anchors.margins: Metrics.spacingBase
+                    spacing: Metrics.spacingBase
+                    
+                    IconImage {
+                        Layout.preferredWidth: 32
+                        Layout.preferredHeight: 32
+                        Layout.alignment: Qt.AlignVCenter 
+                        
+                        source: {
+                            if (!modelData.icon) return "";
+                            if (modelData.icon.startsWith("/")) return "file://" + modelData.icon;
+                            return "image://icon/" + modelData.icon;
+                        }
+                    }
+
+                    ColumnLayout {
+                        Layout.fillWidth: true
+                        Layout.alignment: Qt.AlignVCenter 
+                        spacing: 2
+                        clip: true 
+                        
+                        Text {
+                            Layout.fillWidth: true
+                            text: modelData.name
+                            color: delegateRoot.isActive ? Theme.base : Theme.text
+                            
+                            font.family: Theme.fontMain   
+                            font.pixelSize: 22   
+                            font.weight: Font.Medium
+                            
+                            Behavior on color { ColorAnimation { duration: Metrics.animBase } }
+                        }
+                        
+                        Text {
+                            Layout.fillWidth: true
+                            text: modelData.comment || modelData.genericName || ""
+                            color: delegateRoot.isActive ? Qt.rgba(Theme.base.r, Theme.base.g, Theme.base.b, 0.7) : Qt.lighter(Theme.text, 1.5)
+                            
+                            font.family: Theme.fontMain   
+                            font.pixelSize: 16   
+                            
+                            visible: text !== "" 
+                            Behavior on color { ColorAnimation { duration: Metrics.animBase } }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}

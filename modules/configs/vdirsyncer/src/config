@@ -1,0 +1,18 @@
+[general]
+status_path = "~/.local/share/vdirsyncer/status/"
+
+[pair my_calendar]
+a = "my_calendar_local"
+b = "my_calendar_remote"
+collections = ["from a", "from b"]
+
+[storage my_calendar_local]
+type = "filesystem"
+path = "~/.local/share/calendars/"
+fileext = ".ics"
+
+[storage my_calendar_remote]
+type = "caldav"
+url = "https://caldav.your-provider.com/"
+username = "your_username"
+password = "your_password"

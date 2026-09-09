@@ -1,0 +1,8 @@
+* {
+    bg-col: {background};
+    bg-col-dark: {color0};
+    bg-col-alt: {color8};
+    main-col: {color4};
+    urgent-col: {color1};
+    fg-col: {foreground};
+}
