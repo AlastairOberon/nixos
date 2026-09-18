@@ -38,13 +38,15 @@ Item {
         visible         : false 
         layer.enabled   : true 
 
-        // Main Body
+        // Gradient Mask for subtle top and bottom fade
         Rectangle {
-            anchors.top     : parent.top
-            anchors.bottom  : parent.bottom
-            anchors.left    : parent.left
-            anchors.right   : parent.right
-            color           : "white"
+            anchors.fill    : parent
+            gradient: Gradient {
+                GradientStop { position: 0.0; color: "transparent" }
+                GradientStop { position: 0.04; color: "white" }
+                GradientStop { position: 0.94; color: "white" }
+                GradientStop { position: 1.0; color: "transparent" }
+            }
         }
     } 
 }

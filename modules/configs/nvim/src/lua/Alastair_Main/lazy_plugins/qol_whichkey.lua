@@ -2,22 +2,32 @@ return {
   "folke/which-key.nvim",
   event = "VeryLazy",
   init = function()
-    -- This ensures your leader key triggers the timeout
     vim.o.timeout = true
-    -- How many milliseconds to wait before popping up the menu (adjust to your liking)
-    vim.o.timeoutlen = 300 
+    vim.o.timeoutlen = 300
   end,
   opts = {
-    -- You can leave this empty, the default settings are excellent
+    spec = {
+      { "<leader>f", group = "Find / Files" },
+      { "<leader>p", group = "Pick / Project" },
+      { "<leader>g", group = "Git" },
+      { "<leader>c", group = "Code / LSP" },
+      { "<leader>s", group = "Splits / Search" },
+      { "<leader>t", group = "Todos / Tasks" },
+      { "<leader>x", group = "Trouble / Diagnostics" },
+      { "<leader>u", group = "UI Toggles" },
+      { "<leader>w", group = "Write / Prose" },
+      { "<leader>n", group = "Notes / Scratch" },
+      { "<leader>q", group = "Session / Quit" },
+    },
   },
   keys = {
-    -- This adds your specific request: hitting <leader>? shows all keymaps
     {
-      "<leader>",
+      "<leader>?",
       function()
         require("which-key").show({ global = false })
       end,
-      desc = "Show local keymaps (Which-Key)",
+      desc = "Buffer local keymaps (Which-Key)",
     },
   },
 }
+

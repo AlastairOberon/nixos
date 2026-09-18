@@ -1,31 +1,30 @@
 { ... }:
 
-let
-  # Helper to auto-import a directory if it exists
-  importDirIfExists = dir:
-    if builtins.pathExists dir then
-      let
-        files = builtins.readDir dir;
-        toImport = builtins.filter (name:
-          let
-            type = files.${name};
-          in
-            (type == "regular" && name != "default.nix" && builtins.match "[^_].*\\.nix" name != null) ||
-            (type == "directory" && builtins.pathExists (dir + "/${name}/default.nix") && builtins.match "[^_].*" name != null)
-        ) (builtins.attrNames files);
-      in
-        builtins.map (name: dir + "/${name}") toImport
-    else
-      [];
-in
 {
+  # =========================================================================
+  # System / Device Name
+  # Changing this single value updates your:
+  #   1. System hostname (CLI prompt, system identification)
+  #   2. Local network name & mDNS (e.g. memosyne.local)
+  #   3. Bluetooth broadcast name (visible to phones/headphones)
+  # =========================================================================
+  networking.hostName = "memosyne";
+
   imports = [
     ./hardware-configuration.nix
+    (if builtins.pathExists ./local-hardware.nix then ./local-hardware.nix else {})
     ./modules
-  ] ++ (importDirIfExists ./flake_apps);
+  ];
 
   # Allow unfree packages globally
   nixpkgs.config.allowUnfree = true;
+
+  # Automated weekly garbage collection
+  nix.gc = {
+    automatic = true;
+    dates = "weekly";
+    options = "--delete-older-than 14d";
+  };
 
   # Automatically back up existing files that would be clobbered by Home Manager
   home-manager.backupFileExtension = "backup";

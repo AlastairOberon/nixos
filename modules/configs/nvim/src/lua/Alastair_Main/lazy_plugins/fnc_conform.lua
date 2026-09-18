@@ -35,22 +35,24 @@ return {
 				graphql = { "prettier" },
 				liquid = { "prettier" },
 				lua = { "stylua" },
-				python = { "isort", "black" }, -- added isort since you installed it
+				python = { "isort", "black" },
 				markdown = { "prettier", "markdown-toc" },
 
-				-- 👇 New Data/Config File Formatters
-				json = { "biome-check" }, -- Biome is natively much faster than Prettier for JSON
+				-- Data/Config formatters
+				json = { "biome-check" },
 				jsonc = { "biome-check" },
 				yaml = { "prettier" },
-				toml = { "taplo" }, -- Taplo handles TOML formatting
-				sh = { "shfmt" }, -- Shell scripts
-				bash = { "shfmt" }, -- Bash scripts
+				toml = { "taplo" },
+				sh = { "shfmt" },
+				bash = { "shfmt" },
+				nix = { "nixfmt", "alejandra", stop_after_first = true },
 			},
-			-- format_on_save = {
-			--     lsp_fallback = true,
-			--     async = false,
-			--     timeout_ms = 1000,
-			-- },
+			format_on_save = function(bufnr)
+				if vim.g.disable_autoformat or vim.b[bufnr].disable_autoformat then
+					return
+				end
+				return { timeout_ms = 1000, lsp_fallback = true }
+			end,
 		})
 
 		-- Configure individual formatters
@@ -68,12 +70,29 @@ return {
 			prepend_args = { "-i", "4" },
 		}
 
-		vim.keymap.set({ "n", "v" }, "<leader>ml", function()
+		-- User command to toggle format-on-save
+		vim.api.nvim_create_user_command("FormatToggle", function(args)
+			if args.bang then
+				vim.b.disable_autoformat = not vim.b.disable_autoformat
+				print("Format-on-save (buffer): " .. (vim.b.disable_autoformat and "Disabled" or "Enabled"))
+			else
+				vim.g.disable_autoformat = not vim.g.disable_autoformat
+				print("Format-on-save (global): " .. (vim.g.disable_autoformat and "Disabled" or "Enabled"))
+			end
+		end, {
+			desc = "Toggle format-on-save (use ! for buffer-only)",
+			bang = true,
+		})
+
+		vim.keymap.set("n", "<leader>uf", "<cmd>FormatToggle<CR>", { desc = "Toggle format-on-save" })
+		vim.keymap.set("n", "<leader>uF", "<cmd>FormatToggle!<CR>", { desc = "Toggle buffer format-on-save" })
+
+		vim.keymap.set({ "n", "v" }, "<leader>cf", function()
 			conform.format({
-				lsp_fallback = true, -- Taplo relies on this fallback to format TOML
+				lsp_fallback = true,
 				async = false,
 				timeout_ms = 1000,
 			})
-		end, { desc = "Format whole file or range (in visual mode)" })
+		end, { desc = "Format buffer or selection" })
 	end,
 }

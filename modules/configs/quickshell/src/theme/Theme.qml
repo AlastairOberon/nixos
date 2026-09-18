@@ -35,32 +35,29 @@ QtObject {
     property string fontIcon: "Symbols Nerd Font"
 
     // --- MONITOR SCALING STATE ---
-    property var monitorScales: ({})
+    property var monitorScales: Settings.monitorScales
 
-    // Read the current scales from the system environment when Quickshell starts
+    // Read the current scales from the system environment on first boot if not yet in settings
     Component.onCompleted: {
         let envString = Quickshell.env("QT_SCREEN_SCALE_FACTORS");
-        if (envString) {
-            let temp = {};
+        if (envString && Object.keys(Settings.monitorScales).length === 0) {
             let parts = envString.split(";");
             for (let i = 0; i < parts.length; i++) {
                 if (parts[i].indexOf("=") !== -1) {
                     let kv = parts[i].split("=");
-                    temp[kv[0]] = parseFloat(kv[1]);
+                    Settings.setMonitorScale(kv[0], parseFloat(kv[1]));
                 }
             }
-            root.monitorScales = temp;
         }
     }
 
     function setMonitorScale(monName, scale) {
-        let temp = Object.assign({}, root.monitorScales);
-        temp[monName] = scale;
-        root.monitorScales = temp;
+        Settings.setMonitorScale(monName, scale);
     }
 
     function getMonitorScale(monName) {
-        return root.monitorScales[monName] !== undefined ? root.monitorScales[monName] : 1.0;
+        return (Settings.monitorScales && Settings.monitorScales[monName] !== undefined) 
+            ? Settings.monitorScales[monName] : 1.0;
     }
 
     // Pywall Loader

@@ -15,6 +15,7 @@ return {
 
 		-- enable mason and configure icons
 		mason.setup({
+			PATH = "prepend",
 			ui = {
 				icons = {
 					package_installed = "✓",
@@ -27,7 +28,7 @@ return {
 		mason_lspconfig.setup({
 			automatic_enable = false,
 			ensure_installed = {
-				-- Your existing LSPs
+				-- Language Servers
 				"lua_ls",
 				"ts_ls",
 				"html",
@@ -39,31 +40,36 @@ return {
 				"emmet_language_server",
 				"marksman",
 				"pyright",
-				"clangd", -- Moved here from tool_installer
-				"denols", -- Moved here from tool_installer
-
-				-- New Data/Config LSPs
-				"taplo", -- TOML
-				"yamlls", -- YAML
-				"jsonls", -- JSON
-				"bashls", -- Bash scripts
+				"clangd",
+				"denols",
+				"taplo",
+				"yamlls",
+				"jsonls",
+				"bashls",
 			},
 		})
 
 		mason_tool_installer.setup({
+			run_on_start = true,
+			start_delay = 500,
+			debounce_hours = 5,
 			ensure_installed = {
-				-- Your existing Formatters & Linters
+				-- Formatters
 				"prettier",
 				"stylua",
 				"isort",
-				"pylint",
-				-- { 'eslint_d', version = '13.1.2' },
-
-				-- New Linters
+				"black",
+				"shfmt",
 				"biome",
+
+				-- Linters
+				"pylint",
+				"shellcheck",
 				"yamllint",
 				"markdownlint",
+				"markdownlint-cli2",
 				"hadolint",
+				"eslint_d",
 			},
 		})
 	end,

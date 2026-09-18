@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<actions>
+<action>
+	<icon>utilities-terminal</icon>
+	<name>Open Terminal Here</name>
+	<submenu></submenu>
+	<unique-id>1787059765917374-1</unique-id>
+	<command>sh -c 'if [ -d "$1" ]; then ghostty --working-directory="$1"; else ghostty --working-directory="$(dirname "$1")"; fi' _ %f</command>
+	<description>Open Ghostty terminal in current folder</description>
+	<range></range>
+	<patterns>*</patterns>
+	<startup-notify/>
+	<directories/>
+	<other-files/>
+	<text-files/>
+	<image-files/>
+	<audio-files/>
+	<video-files/>
+</action>
+</actions>

@@ -1,15 +1,11 @@
 return {
     {
         "nvim-treesitter/nvim-treesitter",
+        branch = "master",
         event = { "BufReadPre", "BufNewFile" },
         build = ":TSUpdate",
         config = function()
-            -- Safe require to prevent the crash and give a better error
-            local status, configs = pcall(require, "nvim-treesitter.configs")
-            if not status then
-                print("Treesitter configs not found, trying to reinstall...")
-                return
-            end
+            local configs = require("nvim-treesitter.configs")
 
             configs.setup({
                 highlight = {
@@ -22,7 +18,7 @@ return {
                     "html", "css", "python", "http", "prisma", "markdown",
                     "markdown_inline", "svelte", "graphql", "bash", "lua",
                     "vim", "dockerfile", "gitignore", "query", "vimdoc",
-                    "c", "java", "rust", "ron",
+                    "c", "java", "rust", "ron", "nix", "toml", "diff", "regex",
                 },
                 incremental_selection = {
                     enable = true,

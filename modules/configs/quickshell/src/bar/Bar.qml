@@ -1,16 +1,10 @@
 import QtQuick
 import QtQuick.Layouts
 import Quickshell
+import Quickshell.Hyprland
 import "../theme"
 import "./barComponents/workspaces/"
-import "./barComponents/power/"
-import "./barComponents/time/"
-import "./barComponents/audio/"
-import "./barComponents/weather/"
-import "./barComponents/launcher/"
-import "./barComponents/network/"
-//import "./barComponents/clipboard/"
-//import "./barComponents/emoji/"
+import "./barComponents/indicators/"
 import "./barComponents/notifications/"
 
 PanelWindow {
@@ -33,6 +27,42 @@ PanelWindow {
     color           : "transparent"
 
     property real bgOpacity: 0.8 
+
+    // Helper function to toggle or switch tabs in LauncherWindow
+    function toggleTab(tabIndex) {
+        if (myLauncher && myLauncher.window) {
+            if (myLauncher.window.visible && myLauncher.window.currentTabIndex === tabIndex) {
+                myLauncher.window.visible = false;
+            } else {
+                myLauncher.window.currentTabIndex = tabIndex;
+                myLauncher.window.visible = true;
+            }
+        }
+    }
+
+    // 1. QtQuick Shortcuts
+    Shortcut {
+        sequence: "Super+Space"
+        onActivated: barWindow.toggleTab(1)
+    }
+
+    Shortcut {
+        sequence: "Super+V"
+        onActivated: barWindow.toggleTab(6)
+    }
+
+    // 2. Quickshell Hyprland Global Shortcuts
+    GlobalShortcut {
+        name: "app_launcher"
+        description: "Open App Launcher"
+        onPressed: barWindow.toggleTab(1)
+    }
+
+    GlobalShortcut {
+        name: "clipboard"
+        description: "Open Clipboard History"
+        onPressed: barWindow.toggleTab(6)
+    }
 
     // Background Layer (Fills the entire window)
     Rectangle {
@@ -69,7 +99,7 @@ PanelWindow {
         // Center Aligned
         RowLayout {
             anchors.centerIn    : parent
-            spacing             : 20
+            spacing             : 12
             Climate {}
             Visualizer {}
             Clock {}
@@ -84,12 +114,9 @@ PanelWindow {
             anchors.top             : parent.top
             anchors.bottom          : parent.bottom
             anchors.rightMargin     : 15
-            spacing                 : 15 
+            spacing                 : 12 
 
-            //Stats {}
-            //Disks {}
-            //Emoji {}
-            //Clipboard {}
+            Battery {}
             Power {}
         }
     }
@@ -104,4 +131,3 @@ PanelWindow {
         }
     }
 }
-

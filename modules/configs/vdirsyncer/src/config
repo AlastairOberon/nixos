@@ -13,6 +13,6 @@ fileext = ".ics"
 
 [storage my_calendar_remote]
 type = "caldav"
-url = "https://caldav.your-provider.com/"
-username = "your_username"
-password = "your_password"
+url = "https://sync.infomaniak.com/"
+username = "2246957"
+password = "5ykNO3&@I4slT6"

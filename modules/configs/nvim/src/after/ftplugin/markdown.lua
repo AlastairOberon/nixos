@@ -12,6 +12,11 @@ set.spelllang = "en_us"
 -- Hide markdown characters for render-markdown.nvim
 set.conceallevel = 2
 
+-- Smart list auto-continuation on Enter and 'o'
+set.formatoptions:append("r")
+set.formatoptions:append("o")
+set.comments = "b:*,b:-,b:+,n:>,b:1."
+
 -- Move by visual line instead of paragraph (Crucial for wrapped text)
 local opts = { buffer = true, silent = true }
 vim.keymap.set('n', 'j', 'gj', opts)
@@ -437,4 +442,89 @@ vim.cmd(
 vim.cmd(
     string.format([[highlight @markup.heading.6.markdown cterm=bold gui=bold guifg=%s guibg=%s]], color_fg, color6_bg)
 )
+
+-- =========================================================================
+-- PROSE & STORY WRITING SUITE
+-- =========================================================================
+
+-- Helper to surround visual selection with markdown tags
+local function surround_selection(prefix, suffix)
+    return function()
+        local s_start = vim.fn.getpos("'<")
+        local s_end = vim.fn.getpos("'>")
+        local n_lines = math.abs(s_end[2] - s_start[2]) + 1
+        local lines = vim.api.nvim_buf_get_lines(0, s_start[2] - 1, s_end[2], false)
+        if #lines == 0 then return end
+        if n_lines == 1 then
+            local line = lines[1]
+            local col1 = s_start[3]
+            local col2 = s_end[3]
+            local new_line = line:sub(1, col1 - 1) .. prefix .. line:sub(col1, col2) .. suffix .. line:sub(col2 + 1)
+            vim.api.nvim_buf_set_lines(0, s_start[2] - 1, s_end[2], false, { new_line })
+        end
+    end
+end
+
+-- Helper to apply markdown heading to current line
+local function set_heading(level)
+    return function()
+        local line = vim.api.nvim_get_current_line()
+        local cleaned = line:gsub("^#+%s*", "")
+        local hashes = string.rep("#", level)
+        vim.api.nvim_set_current_line(hashes .. " " .. cleaned)
+    end
+end
+
+-- Helper to create markdown link from selection
+local function make_link()
+    local s_start = vim.fn.getpos("'<")
+    local s_end = vim.fn.getpos("'>")
+    local lines = vim.api.nvim_buf_get_lines(0, s_start[2] - 1, s_end[2], false)
+    if #lines == 1 then
+        local line = lines[1]
+        local col1 = s_start[3]
+        local col2 = s_end[3]
+        local text = line:sub(col1, col2)
+        local url = vim.fn.input("Link URL: ")
+        if url and url ~= "" then
+            local new_line = line:sub(1, col1 - 1) .. "[" .. text .. "](" .. url .. ")" .. line:sub(col2 + 1)
+            vim.api.nvim_buf_set_lines(0, s_start[2] - 1, s_end[2], false, { new_line })
+        end
+    end
+end
+
+-- Document statistics: words, characters, reading time
+local function show_document_stats()
+    local lines = vim.api.nvim_buf_get_lines(0, 0, -1, false)
+    local word_count = 0
+    local char_count = 0
+    for _, line in ipairs(lines) do
+        char_count = char_count + #line
+        for _ in line:gmatch("%S+") do
+            word_count = word_count + 1
+        end
+    end
+    local reading_time = math.ceil(word_count / 200) -- Average 200 WPM
+    print(string.format("Lines: %d | Words: %d | Chars: %d | Est. Reading Time: ~%d min", #lines, word_count, char_count, reading_time))
+end
+
+local bopts = { buffer = true, silent = true }
+
+-- Visual mode formatting
+vim.keymap.set("v", "<leader>wb", surround_selection("**", "**"), vim.tbl_extend("force", bopts, { desc = "Bold selection (**)" }))
+vim.keymap.set("v", "<leader>wi", surround_selection("*", "*"), vim.tbl_extend("force", bopts, { desc = "Italic selection (*)" }))
+vim.keymap.set("v", "<leader>ws", surround_selection("~~", "~~"), vim.tbl_extend("force", bopts, { desc = "Strikethrough selection (~~)" }))
+vim.keymap.set("v", "<leader>wc", surround_selection("`", "`"), vim.tbl_extend("force", bopts, { desc = "Inline code selection (`)" }))
+vim.keymap.set("v", "<leader>wq", surround_selection("> ", ""), vim.tbl_extend("force", bopts, { desc = "Blockquote selection (>)" }))
+vim.keymap.set("v", "<leader>wl", make_link, vim.tbl_extend("force", bopts, { desc = "Create Markdown link [text](url)" }))
+
+-- Normal mode heading shortcuts
+vim.keymap.set("n", "<leader>w1", set_heading(1), vim.tbl_extend("force", bopts, { desc = "Heading 1 (#)" }))
+vim.keymap.set("n", "<leader>w2", set_heading(2), vim.tbl_extend("force", bopts, { desc = "Heading 2 (##)" }))
+vim.keymap.set("n", "<leader>w3", set_heading(3), vim.tbl_extend("force", bopts, { desc = "Heading 3 (###)" }))
+vim.keymap.set("n", "<leader>w4", set_heading(4), vim.tbl_extend("force", bopts, { desc = "Heading 4 (####)" }))
+
+-- Document stats
+vim.keymap.set("n", "<leader>wW", show_document_stats, vim.tbl_extend("force", bopts, { desc = "Show Document Word Count & Reading Time" }))
+
 

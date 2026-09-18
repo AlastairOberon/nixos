@@ -1,15 +1,19 @@
-# Automatically escape URLs and special characters when pasting
+# --- Fast Bracketed URL Pasting ---
+# bracketed-paste-magic prevents paste lag caused by url-quote-magic
+autoload -Uz bracketed-paste-magic
+zle -N bracketed-paste bracketed-paste-magic
 autoload -Uz url-quote-magic
 zle -N self-insert url-quote-magic
 
-# Magic Enter
+# --- Magic Enter ---
+# Pressing Enter on an empty prompt prints directory contents & git status
 function magic-enter() {
-    if [[ -z $BUFFER ]]; then
+    if [[ -z ${BUFFER// /} ]]; then
         echo ""
         ls --color=auto
         if git rev-parse --is-inside-work-tree > /dev/null 2>&1; then
             echo ""
-            git status -s
+            git status -sb
         fi
         zle redisplay
     else
@@ -17,4 +21,9 @@ function magic-enter() {
     fi
 }
 zle -N magic-enter
-bindkey '^M' magic-enter # Binds the Enter key
+
+# Bind Enter in both Vi insert and normal modes
+bindkey -M viins '^M' magic-enter
+bindkey -M vicmd '^M' magic-enter
+bindkey '^M' magic-enter
+

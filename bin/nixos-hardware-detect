@@ -1,0 +1,284 @@
+#!/usr/bin/env python3
+"""
+nixos-hardware-detect
+Automatically inspects system hardware and generates /etc/nixos/local-hardware.nix
+"""
+
+import os
+import sys
+import subprocess
+import re
+
+def read_file(path):
+    try:
+        with open(path, "r", encoding="utf-8") as f:
+            return f.read().strip()
+    except Exception:
+        return ""
+
+def is_laptop():
+    # Check battery
+    if os.path.exists("/sys/class/power_supply"):
+        for name in os.listdir("/sys/class/power_supply"):
+            if name.startswith("BAT"):
+                return True
+    # Check chassis type
+    chassis = read_file("/sys/class/dmi/id/chassis_type")
+    # 8: Portable, 9: Laptop, 10: Notebook, 11: Hand Held, 12: Sub Notebook, 14: Sub Notebook, 31: Convertible, 32: Detachable
+    if chassis in ["8", "9", "10", "11", "12", "14", "30", "31", "32"]:
+        return True
+    return False
+
+def is_lenovo_legion():
+    family = read_file("/sys/class/dmi/id/product_family").lower()
+    version = read_file("/sys/class/dmi/id/product_version").lower()
+    vendor = read_file("/sys/class/dmi/id/sys_vendor").lower()
+    product = read_file("/sys/class/dmi/id/product_name").lower()
+    
+    text = f"{family} {version} {vendor} {product}"
+    return "legion" in text
+
+def has_realtek_rtw89():
+    try:
+        out = subprocess.check_output(["lspci", "-nn"], text=True)
+        # RTL8852AE: 10ec:8852, RTL8852BE: 10ec:b852, RTL8852CE: 10ec:c852
+        if re.search(r"10ec:[8bc]852", out, re.IGNORECASE) or "RTL8852" in out:
+            return True
+    except Exception:
+        pass
+    return False
+
+def pci_to_nix_bus_id(pci_str):
+    # Converts 0000:01:00.0 or 01:00.0 to PCI:1:0:0
+    m = re.search(r"(?:([0-9a-fA-F]+):)?([0-9a-fA-F]{2}):([0-9a-fA-F]{2})\.([0-9a-fA-F]+)", pci_str)
+    if not m:
+        return None
+    bus = int(m.group(2), 16)
+    dev = int(m.group(3), 16)
+    func = int(m.group(4), 16)
+    return f"PCI:{bus}:{dev}:{func}"
+
+def detect_gpus():
+    gpus = []
+    try:
+        out = subprocess.check_output(["lspci", "-D", "-nn"], text=True)
+        for line in out.strip().split("\n"):
+            # Check VGA (0300), 3D (0302), Display (0380)
+            if re.search(r"\[03(00|02|80)\]", line):
+                parts = line.split()
+                pci_addr = parts[0]
+                bus_id = pci_to_nix_bus_id(pci_addr)
+                
+                vendor = "unknown"
+                if "10de:" in line:
+                    vendor = "nvidia"
+                elif "1002:" in line:
+                    vendor = "amd"
+                elif "8086:" in line:
+                    vendor = "intel"
+                
+                gpus.append({
+                    "pci_addr": pci_addr,
+                    "bus_id": bus_id,
+                    "vendor": vendor,
+                    "raw": line
+                })
+    except Exception as e:
+        print(f"Warning: Failed to run lspci: {e}", file=sys.stderr)
+    return gpus
+
+def classify_nvidia(nvidia_raw_str):
+    raw = nvidia_raw_str.upper()
+
+    # 1. Modern NVIDIA architectures (Turing, Ampere, Ada Lovelace, Hopper, Blackwell):
+    # Turing (TU10x/TU11x): RTX 20xx, GTX 16xx, Quadro RTX
+    # Ampere (GA10x): RTX 30xx, RTX Axxxx
+    # Ada Lovelace (AD10x): RTX 40xx, RTX x000 Ada
+    # Hopper (GH10x), Blackwell (GB20x): RTX 50xx
+    is_modern = any(x in raw for x in [
+        "RTX", "GTX 16", "TU10", "TU11", "GA10", "AD10", "GH10", "GB20", "BLACKWELL", "HOPPER"
+    ])
+    if is_modern:
+        return {
+            "driver": "stable",
+            "open": True,
+            "desc": "Modern NVIDIA (Turing/Ampere/Ada/Blackwell) with open kernel modules"
+        }
+
+    # 2. Pascal architecture (2016-2017):
+    # GTX 10xx, MX150, MX250, MX350, Quadro Pxxxx, GP10x
+    is_pascal = any(x in raw for x in [
+        "GTX 10", "TITAN X (PASCAL)", "TITAN XP", "GP10", "MX150", "MX250", "MX350", "QUADRO P"
+    ])
+    if is_pascal:
+        return {
+            "driver": "legacy_580",
+            "open": False,
+            "desc": "NVIDIA Pascal (GTX 10xx / MX / Quadro P) with proprietary drivers"
+        }
+
+    # 3. Maxwell architecture (2014-2015):
+    # GTX 9xx, GTX 750, GTX 750 Ti, 940MX, 930M, Quadro Mxxxx, GM10x, GM20x
+    is_maxwell = any(x in raw for x in [
+        "GTX 9", "GTX 750", "940M", "930M", "920M", "GM10", "GM20", "QUADRO M"
+    ])
+    if is_maxwell:
+        return {
+            "driver": "legacy_580",
+            "open": False,
+            "desc": "NVIDIA Maxwell (GTX 9xx / 750 / Quadro M) with legacy 580 drivers"
+        }
+
+    # 4. Kepler architecture (2012-2014):
+    # GTX 6xx, GTX 7xx (except 750/750Ti), Titan, Titan Black, Titan Z, Quadro Kxxxx, GK10x, GK11x, GK20x
+    is_kepler = any(x in raw for x in [
+        "GTX 7", "GTX 6", "TITAN", "GK10", "GK11", "GK20", "QUADRO K"
+    ])
+    if is_kepler:
+        return {
+            "driver": "legacy_470",
+            "open": False,
+            "desc": "NVIDIA Kepler (GTX 6xx / 7xx / Quadro K) with legacy 470 drivers"
+        }
+
+    # 5. Fermi architecture (2010-2011):
+    # GTX 4xx, GTX 5xx, Quadro 2000/4000/5000, GF10x, GF11x
+    is_fermi = any(x in raw for x in [
+        "GTX 5", "GTX 4", "GF10", "GF11", "QUADRO 600", "QUADRO 2000", "QUADRO 4000", "QUADRO 5000"
+    ])
+    if is_fermi:
+        return {
+            "driver": "legacy_390",
+            "open": False,
+            "desc": "NVIDIA Fermi (GTX 4xx / 5xx) with legacy 390 drivers"
+        }
+
+    # Fallback for unlisted older NVIDIA cards:
+    return {
+        "driver": "legacy_470",
+        "open": False,
+        "desc": "Legacy NVIDIA GPU with legacy 470 drivers"
+    }
+
+def main():
+    dry_run = "--dry-run" in sys.argv
+    target_path = "/etc/nixos/local-hardware.nix"
+
+    print("========================================")
+    print("   NixOS Hardware Auto-Detector")
+    print("========================================")
+
+    laptop = is_laptop()
+    legion = is_lenovo_legion()
+    rtw89 = has_realtek_rtw89()
+    gpus = detect_gpus()
+
+    print(f"[*] Form Factor:      {'Laptop' if laptop else 'Desktop'}")
+    print(f"[*] Lenovo Legion:    {'Yes' if legion else 'No'}")
+    print(f"[*] Realtek rtw89:    {'Detected' if rtw89 else 'Not detected'}")
+
+    # Determine GPU profile
+    gpu_type = "auto"
+    open_kernel = True
+    driver = "stable"
+    amd_bus = None
+    intel_bus = None
+    nvidia_bus = None
+
+    nvidia_gpus = [g for g in gpus if g["vendor"] == "nvidia"]
+    amd_gpus = [g for g in gpus if g["vendor"] == "amd"]
+    intel_gpus = [g for g in gpus if g["vendor"] == "intel"]
+
+    print(f"[*] Detected GPUs:    {len(gpus)}")
+    for g in gpus:
+        print(f"    - {g['vendor'].upper()}: {g['raw']}")
+
+    if nvidia_gpus:
+        nvidia_bus = nvidia_gpus[0]["bus_id"]
+        nv_info = classify_nvidia(nvidia_gpus[0]["raw"])
+        open_kernel = nv_info["open"]
+        driver = nv_info["driver"]
+        print(f"[*] NVIDIA Details:   {nv_info['desc']}")
+
+        if laptop and amd_gpus:
+            gpu_type = "nvidia-hybrid-amd"
+            amd_bus = amd_gpus[0]["bus_id"]
+        elif laptop and intel_gpus:
+            gpu_type = "nvidia-hybrid-intel"
+            intel_bus = intel_gpus[0]["bus_id"]
+        else:
+            gpu_type = "nvidia"
+    elif amd_gpus:
+        gpu_type = "amd"
+        print("[*] GPU Architecture: AMD Radeon (Open-source Mesa/AMDGPU driver)")
+    elif intel_gpus:
+        gpu_type = "intel"
+        print("[*] GPU Architecture: Intel Graphics (Open-source Mesa driver)")
+    else:
+        gpu_type = "auto"
+        print("[*] GPU Architecture: Generic / Virtual Machine (Standard KMS/Mesa)")
+
+    print(f"[*] Selected Profile: {gpu_type}")
+    if nvidia_bus:
+        print(f"    - NVIDIA Bus ID:   {nvidia_bus} (open={open_kernel}, driver={driver})")
+    if amd_bus:
+        print(f"    - AMD iGPU Bus ID: {amd_bus}")
+    if intel_bus:
+        print(f"    - Intel iGPU Bus:  {intel_bus}")
+
+    # Build local-hardware.nix content
+    lines = [
+        "# Auto-generated by nixos-hardware-detect",
+        "# This file contains machine-specific hardware profile settings.",
+        "{ ... }:",
+        "",
+        "{",
+        "  hardwareProfile = {",
+        "    gpu = {",
+        f'      type = "{gpu_type}";',
+    ]
+
+    if "nvidia" in gpu_type:
+        lines.append(f'      open = {"true" if open_kernel else "false"};')
+        lines.append(f'      nvidiaDriver = "{driver}";')
+        if "hybrid" in gpu_type:
+            lines.append("      prime = {")
+            if amd_bus:
+                lines.append(f'        amdgpuBusId = "{amd_bus}";')
+            if intel_bus:
+                lines.append(f'        intelBusId = "{intel_bus}";')
+            lines.append(f'        nvidiaBusId = "{nvidia_bus}";')
+            lines.append("      };")
+
+    lines.append("    };")
+    lines.append("    laptop = {")
+    lines.append(f'      enable = {"true" if laptop else "false"};')
+    lines.append(f'      lenovoLegion = {"true" if legion else "false"};')
+    lines.append(f'      realtekWifiFix = {"true" if rtw89 else "false"};')
+    lines.append("    };")
+    lines.append("  };")
+    lines.append("}")
+    lines.append("")
+
+    content = "\n".join(lines)
+
+    if dry_run:
+        print("\n--- Dry Run Output (/etc/nixos/local-hardware.nix) ---")
+        print(content)
+        print("Dry run completed. No files modified.")
+    else:
+        existing = read_file(target_path)
+        if existing.strip() == content.strip():
+            print(f"\n[*] Hardware profile at {target_path} is already up to date.")
+            return
+
+        try:
+            with open(target_path, "w", encoding="utf-8") as f:
+                f.write(content)
+            print(f"\n[+] Successfully updated hardware profile in {target_path}")
+        except PermissionError:
+            print(f"\n[-] Permission denied writing to {target_path}. Please run with sudo.", file=sys.stderr)
+            sys.exit(1)
+
+if __name__ == "__main__":
+    main()

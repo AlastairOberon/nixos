@@ -100,6 +100,12 @@
           install_url = "https://addons.mozilla.org/firefox/downloads/latest/proton-vpn-firefox-extension/latest.xpi";
           installation_mode = "force_installed";
         };
+
+        # Unhook - Remove YouTube Recommended Videos
+        "myallychou@gmail.com" = {
+          install_url = "https://addons.mozilla.org/firefox/downloads/latest/youtube-recommended-videos/latest.xpi";
+          installation_mode = "force_installed";
+        };
       };
     };
   };

@@ -1,0 +1,17 @@
+mpd_host = "127.0.0.1"
+mpd_port = "6600"
+mpd_music_dir = "/home/alastair_oberon/Music"
+
+# Visualizer settings
+visualizer_data_source = "/tmp/mpd.fifo"
+visualizer_output_name = "Visualizer Feed"
+visualizer_in_stereo = "yes"
+visualizer_type = "wave"
+visualizer_look = "●▮"
+
+# Interface Polish
+song_list_format = "{$8%a $240- $1%t}|{$8%f}"
+statusbar_visibility = "yes"
+titles_visibility = "no"
+header_visibility = "no"
+progressbar_look = "─⊙─"

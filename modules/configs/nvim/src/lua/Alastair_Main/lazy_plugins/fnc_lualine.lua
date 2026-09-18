@@ -64,6 +64,18 @@ return {
         local branch = {'branch', icon = {'', color={fg='#A6D4DE'}}, '|'}
 
 
+        local word_count = {
+            function()
+                local words = vim.fn.wordcount().words
+                return "󰦨 " .. words .. "w"
+            end,
+            cond = function()
+                local ft = vim.bo.filetype
+                return ft == "markdown" or ft == "text"
+            end,
+            color = { fg = "#a6e3a1" },
+        }
+
 		lualine.setup({
             icons_enabled = true,
 			options = {
@@ -76,15 +88,12 @@ return {
                 lualine_b = { branch },
                 lualine_c = { diff, filename },
 				lualine_x = {
+                    word_count,
 					{
-                        -- require("noice").api.statusline.mode.get,
-                        -- cond = require("noice").api.statusline.mode.has,
 						lazy_status.updates,
 						cond = lazy_status.has_updates,
 						color = { fg = "#ff9e64" },
 					},
-					-- { "encoding",},
-					-- { "fileformat" },
 					{ "filetype" },
 				},
 			},

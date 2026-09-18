@@ -1,0 +1,93 @@
+#!/usr/bin/env python3
+"""
+nixos-hardware-sync
+Ensures the system's hardware configuration and profiles are synchronized with the current machine.
+Useful when cloning this repository to a new PC or changing hardware components.
+"""
+
+import os
+import sys
+import subprocess
+import shutil
+
+def run_cmd(cmd):
+    try:
+        return subprocess.check_output(cmd, text=True).strip()
+    except Exception as e:
+        return ""
+
+def get_current_root_uuid():
+    # Use findmnt to locate root filesystem UUID
+    out = run_cmd(["findmnt", "-n", "-o", "UUID", "/"])
+    if out:
+        return out
+    # Fallback to /proc/mounts and blkid
+    return ""
+
+def sync_hardware_configuration():
+    hw_config_path = "/etc/nixos/hardware-configuration.nix"
+    current_uuid = get_current_root_uuid()
+    
+    needs_generation = False
+    
+    if not os.path.exists(hw_config_path):
+        print("[!] /etc/nixos/hardware-configuration.nix is missing.")
+        needs_generation = True
+    elif current_uuid:
+        try:
+            with open(hw_config_path, "r", encoding="utf-8") as f:
+                content = f.read()
+            if current_uuid not in content:
+                print(f"[!] Current machine root UUID ({current_uuid}) does not match {hw_config_path}.")
+                print("[!] New machine detected! Regenerating hardware-configuration.nix...")
+                needs_generation = True
+            else:
+                print(f"[*] hardware-configuration.nix matches host root UUID ({current_uuid}).")
+        except Exception as e:
+            print(f"[!] Could not read {hw_config_path}: {e}")
+            needs_generation = True
+
+    if needs_generation:
+        print("[*] Running nixos-generate-config --show-hardware-config...")
+        gen_output = run_cmd(["nixos-generate-config", "--show-hardware-config"])
+        if gen_output and "fileSystems" in gen_output:
+            try:
+                with open(hw_config_path, "w", encoding="utf-8") as f:
+                    f.write(gen_output)
+                print(f"[+] Successfully generated {hw_config_path} for this machine.")
+            except PermissionError:
+                print(f"[-] Permission denied writing to {hw_config_path}. Please run with sudo.", file=sys.stderr)
+                sys.exit(1)
+        else:
+            print("[-] Warning: Failed to generate hardware configuration via nixos-generate-config.", file=sys.stderr)
+
+def sync_hardware_profile():
+    detect_script = "/etc/nixos/bin/nixos-hardware-detect"
+    if os.path.exists(detect_script):
+        res = subprocess.run([sys.executable, detect_script])
+        if res.returncode != 0:
+            sys.exit(res.returncode)
+
+def stage_git_files():
+    # Flakes require files to be tracked or staged in git index
+    repo_dir = "/etc/nixos"
+    if os.path.isdir(os.path.join(repo_dir, ".git")):
+        subprocess.run(
+            ["git", "-C", repo_dir, "add", "-N", "hardware-configuration.nix", "local-hardware.nix"],
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL
+        )
+
+def main():
+    print("==================================================")
+    print("      NixOS Machine Hardware Synchronization     ")
+    print("==================================================")
+    sync_hardware_configuration()
+    sync_hardware_profile()
+    stage_git_files()
+    print("==================================================")
+    print("[+] Hardware sync complete. Ready for nixos-rebuild.")
+    print("==================================================")
+
+if __name__ == "__main__":
+    main()

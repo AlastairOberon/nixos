@@ -2,12 +2,12 @@
 
 {
     xdg.configFile."nvim/after".source = 
-        config.lib.file.mkOutOfStoreSymlink "/etc/nixos/modules/configs/nvim/src/after";
+        config.lib.file.mkOutOfStoreSymlink "${config.dotfiles.path}/modules/configs/nvim/src/after";
     xdg.configFile."nvim/lua".source = 
-        config.lib.file.mkOutOfStoreSymlink "/etc/nixos/modules/configs/nvim/src/lua";
+        config.lib.file.mkOutOfStoreSymlink "${config.dotfiles.path}/modules/configs/nvim/src/lua";
     xdg.configFile."nvim/init.lua".source = 
-        config.lib.file.mkOutOfStoreSymlink "/etc/nixos/modules/configs/nvim/src/init.lua";
+        config.lib.file.mkOutOfStoreSymlink "${config.dotfiles.path}/modules/configs/nvim/src/init.lua";
     xdg.configFile."nvim/lazy-lock.json".source = 
-        config.lib.file.mkOutOfStoreSymlink "/etc/nixos/modules/configs/nvim/src/lazy-lock.json";
+        config.lib.file.mkOutOfStoreSymlink "${config.dotfiles.path}/modules/configs/nvim/src/lazy-lock.json";
 
 }

@@ -28,21 +28,69 @@ ueberzug_offset = [ 0, 0, 0, 0 ]
 
 [opener]
 edit = [
+    { run = 'nvim "$@"', desc = "Neovim (Terminal)", block = true },
+    { run = 'antigravity-ide "$@"', desc = "Antigravity IDE", orphan = true },
+    { run = 'micro "$@"', desc = "Micro (Terminal)", block = true },
     { run = '${EDITOR:-vi} "$@"', desc = "$EDITOR", block = true },
 ]
-satty = [
-    { run = 'satty --filename "$1"', desc = "Edit with Satty", orphan = true },
+view_image = [
+    { run = 'imv "$@"', desc = "View image (imv)", orphan = true },
+    { run = 'satty --filename "$1"', desc = "Annotate with Satty", orphan = true },
+    { run = 'xdg-open "$1"', desc = "System Default", orphan = true },
 ]
-play = [
-    { run = 'xdg-open "$1"', desc = "Play", orphan = true },
+edit_image = [
+    { run = 'satty --filename "$1"', desc = "Annotate with Satty", orphan = true },
+    { run = 'inkscape "$@"', desc = "Edit with Inkscape", orphan = true },
+]
+play_video = [
+    { run = 'mpv "$@"', desc = "Play Video (MPV)", orphan = true },
+    { run = 'vlc "$@"', desc = "Play with VLC", orphan = true },
     { run = 'mediainfo "$1"; echo "Press enter to exit"; read _', block = true, desc = "Show media info" },
+    { run = 'xdg-open "$1"', desc = "System Default", orphan = true },
+]
+play_audio = [
+    { run = 'mpv --no-video "$@"', desc = "Play Audio (MPV)", orphan = true },
+    { run = 'vlc "$@"', desc = "Play with VLC", orphan = true },
+    { run = 'mediainfo "$1"; echo "Press enter to exit"; read _', block = true, desc = "Show media info" },
+    { run = 'xdg-open "$1"', desc = "System Default", orphan = true },
+]
+pdf = [
+    { run = 'zathura "$@"', desc = "View PDF (Zathura)", orphan = true },
+    { run = 'zen "$@"', desc = "Open in Zen Browser", orphan = true },
+    { run = 'xdg-open "$1"', desc = "System Default", orphan = true },
+]
+office = [
+    { run = 'onlyoffice-desktopeditors "$@"', desc = "OnlyOffice", orphan = true },
+    { run = 'xdg-open "$1"', desc = "System Default", orphan = true },
+]
+ebook = [
+    { run = 'calibre "$@"', desc = "Calibre E-book Reader", orphan = true },
+    { run = 'zathura "$@"', desc = "Zathura", orphan = true },
+    { run = 'xdg-open "$1"', desc = "System Default", orphan = true },
+]
+model_3d = [
+    { run = 'blender "$@"', desc = "Blender", orphan = true },
+    { run = 'xdg-open "$1"', desc = "System Default", orphan = true },
+]
+archive_gui = [
+    { run = 'file-roller "$@"', desc = "File Roller (Archive Manager)", orphan = true },
+    { run = 'engrampa "$@"', desc = "Engrampa", orphan = true },
+]
+web = [
+    { run = 'zen "$@"', desc = "Zen Browser", orphan = true },
+    { run = 'firefox "$@"', desc = "Firefox", orphan = true },
+    { run = 'xdg-open "$1"', desc = "System Default", orphan = true },
+]
+torrent = [
+    { run = 'qbittorrent "$@"', desc = "qBittorrent", orphan = true },
+    { run = 'xdg-open "$1"', desc = "System Default", orphan = true },
 ]
 open = [
-    { run = 'xdg-open "$1"', desc = "Open", orphan = true },
+    { run = 'xdg-open "$1"', desc = "Open with default", orphan = true },
 ]
 reveal = [
-    { run = 'xdg-open "$(dirname "$1")"', desc = "Reveal" },
-    { run = 'clear; exiftool "$1"; echo "Press enter to exit"; read _', block = true, desc = "Show EXIF" },
+    { run = 'xdg-open "$(dirname "$1")"', desc = "Reveal in File Manager" },
+    { run = 'clear; exiftool "$1"; echo "Press enter to exit"; read _', block = true, desc = "Show EXIF metadata" },
 ]
 # --- Archiving & Extraction ---
 extract = [
@@ -73,17 +121,51 @@ trash = [
 rules = [
     # Folder
     { mime = "folder/*", use = [ "edit", "open", "reveal", "compress" ] },
-    # Text
+
+    # Text & Code
     { mime = "text/*", use = [ "edit", "reveal", "compress" ] },
-    # Image
-    { url = "*.{png,jpg,jpeg,webp,avif,gif,svg,bmp,ico,PNG,JPG,JPEG,WEBP}", use = [ "satty", "open", "reveal", "compress" ] },
-    { mime = "image/*", use = [ "satty", "open", "reveal", "compress" ] },
-    # Media
-    { mime = "{audio,video}/*", use = [ "play", "reveal", "compress" ] },
-    # Code
-    { mime = "application/{json,ndjson,javascript,wine-extension-ini}", use = [ "edit", "reveal", "compress" ] },
-    # Archive (Extract here is primary)
-    { mime = "application/{zip,rar,7z*,tar,gzip,xz,zstd,bzip*,lzma,compress,archive,cpio,arj,xar,ms-cab*}", use = [ "extract", "reveal", "compress" ] },
+    { mime = "application/{json,ndjson,javascript,wine-extension-ini,xml,yaml,x-yaml,toml}", use = [ "edit", "reveal", "compress" ] },
+    { url = "*.{lua,nix,py,js,ts,jsx,tsx,json,toml,yaml,yml,rs,go,c,cpp,h,hpp,sh,zsh,bash,fish,css,scss,html,md,markdown,txt,ini,conf}", use = [ "edit", "reveal", "compress" ] },
+
+    # Images (imv as primary, satty/inkscape on interactive pick 'O')
+    { url = "*.{png,jpg,jpeg,webp,avif,gif,svg,bmp,ico,tiff,PNG,JPG,JPEG,WEBP}", use = [ "view_image", "edit_image", "open", "reveal", "compress" ] },
+    { mime = "image/*", use = [ "view_image", "edit_image", "open", "reveal", "compress" ] },
+
+    # Videos (MPV as primary, VLC/mediainfo on 'O')
+    { mime = "video/*", use = [ "play_video", "reveal", "compress" ] },
+    { url = "*.{mp4,mkv,webm,avi,mov,flv,wmv,m4v,MP4,MKV,WEBM}", use = [ "play_video", "reveal", "compress" ] },
+
+    # Audio (MPV audio as primary, VLC/mediainfo on 'O')
+    { mime = "audio/*", use = [ "play_audio", "reveal", "compress" ] },
+    { url = "*.{mp3,flac,wav,ogg,m4a,opus,aac,MP3,FLAC,WAV,OGG}", use = [ "play_audio", "reveal", "compress" ] },
+
+    # PDF & Documents (Zathura as primary, Zen Browser on 'O')
+    { mime = "application/pdf", use = [ "pdf", "open", "reveal", "compress" ] },
+    { url = "*.{pdf,PDF}", use = [ "pdf", "open", "reveal", "compress" ] },
+
+    # Office Documents (OnlyOffice as primary)
+    { mime = "application/{msword,vnd.openxmlformats-officedocument.*,vnd.ms-excel*,vnd.ms-powerpoint*,vnd.oasis.opendocument.*}", use = [ "office", "open", "reveal", "compress" ] },
+    { url = "*.{doc,docx,xls,xlsx,ppt,pptx,odt,ods,odp,csv,tsv}", use = [ "office", "open", "reveal", "compress" ] },
+
+    # E-Books (Calibre as primary, Zathura on 'O')
+    { mime = "application/{epub+zip,x-mobipocket-ebook}", use = [ "ebook", "pdf", "open", "reveal", "compress" ] },
+    { url = "*.{epub,mobi,azw3,fb2,cbr,cbz}", use = [ "ebook", "pdf", "open", "reveal", "compress" ] },
+
+    # 3D Assets (Blender)
+    { url = "*.{blend,blend1,obj,fbx,stl,gltf,glb,dae,3ds}", use = [ "model_3d", "open", "reveal", "compress" ] },
+
+    # Web Pages
+    { mime = "text/html", use = [ "web", "edit", "open", "reveal" ] },
+    { url = "*.{html,htm,xhtml}", use = [ "web", "edit", "open", "reveal" ] },
+
+    # Torrents (qBittorrent)
+    { mime = "application/x-bittorrent", use = [ "torrent", "open", "reveal" ] },
+    { url = "*.torrent", use = [ "torrent", "open", "reveal" ] },
+
+    # Archive (Extract here is primary, GUI File Roller available on 'O')
+    { mime = "application/{zip,rar,7z*,tar,gzip,xz,zstd,bzip*,lzma,compress,archive,cpio,arj,xar,ms-cab*}", use = [ "extract", "archive_gui", "reveal", "compress" ] },
+    { url = "*.{zip,rar,7z,tar,tar.gz,tgz,tar.bz2,tbz2,tar.xz,txz,tar.zst,gz,bz2,xz,zst}", use = [ "extract", "archive_gui", "reveal", "compress" ] },
+
     # Empty file
     { mime = "inode/empty", use = [ "edit", "reveal", "compress" ] },
     # Virtual file system

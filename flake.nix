@@ -23,7 +23,10 @@
         };
         
         #yazi Bleeding Edge
-        yazi.url = "github:sxyazi/yazi";
+        yazi = {
+            url = "github:sxyazi/yazi";
+            inputs.nixpkgs.follows = "nixpkgs";
+        };
 
         #Home Manager
         home-manager = {
@@ -32,7 +35,10 @@
         };
 
         # Add Herdr
-        herdr.url = "github:herdrdev/herdr";
+        herdr = {
+            url = "github:herdrdev/herdr";
+            inputs.nixpkgs.follows = "nixpkgs";
+        };
 
         #Affinity
         affinity-nix = {
@@ -42,16 +48,15 @@
 
     };
 
-    outputs = { self, nixpkgs, spotx, home-manager, ... }@inputs: {
-        nixosConfigurations = {
-            nixos = nixpkgs.lib.nixosSystem {
+    outputs = { self, nixpkgs, home-manager, ... }@inputs: {
+        nixosConfigurations = rec {
+            memosyne = nixpkgs.lib.nixosSystem {
                 system = "x86_64-linux";
                 modules = [
                 {
                     _module.args = { inherit inputs; };
                 }
                 ./configuration.nix
-                ./modules/flake/affinity.nix
 
                 home-manager.nixosModules.home-manager
                     
@@ -64,6 +69,9 @@
                     }
                 ];
             };
+            # Aliases so rebuild commands work with either name or default:
+            nixos = memosyne;
+            default = memosyne;
         };
     };
 }

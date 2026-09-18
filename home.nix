@@ -1,4 +1,4 @@
-{ config, pkgs, inputs, ... }:
+{ config, pkgs, lib, inputs, ... }:
 
 let
   # Path to the configs directory
@@ -31,35 +31,34 @@ let
     else
       [];
 
-  # Helper to auto-import a directory if it exists (e.g., for user-specific flake apps)
-  importDirIfExists = dir:
-    if builtins.pathExists dir then
-      let
-        files = builtins.readDir dir;
-        toImport = builtins.filter (name:
-          let
-            type = files.${name};
-          in
-            (type == "regular" && name != "default.nix" && builtins.match "[^_].*\\.nix" name != null) ||
-            (type == "directory" && builtins.pathExists (dir + "/${name}/default.nix") && builtins.match "[^_].*" name != null)
-        ) (builtins.attrNames files);
-      in
-        builtins.map (name: dir + "/${name}") toImport
-    else
-      [];
 in
 {
-  home.username = "alastair_oberon";
-  home.homeDirectory = "/home/alastair_oberon";
+  imports = configImports;
 
-  imports = configImports ++ (importDirIfExists ./flake_apps);
+  options.dotfiles.path = lib.mkOption {
+    type = lib.types.str;
+    default = "/etc/nixos";
+    description = "Base path to the NixOS configuration repository for out-of-store symlinks";
+  };
 
-  # You can move user-specific packages out of applications.nix and into here later!
-  home.packages = with pkgs; [
-    # Packages intended just for you go here
-  ];
+  config = {
+    home.username = "alastair_oberon";
+    home.homeDirectory = "/home/alastair_oberon";
 
-  programs.home-manager.enable = true;
-  # Do not change this value. It defines the state version for compatibility.
-  home.stateVersion = "23.11"; 
+    # You can move user-specific packages out of applications.nix and into here later!
+    home.packages = with pkgs; [
+      # Packages intended just for you go here
+    ];
+
+    xdg.userDirs = {
+      enable = true;
+      createDirectories = true;
+      music = "${config.home.homeDirectory}/Music";
+      setSessionVariables = true;
+    };
+
+    programs.home-manager.enable = true;
+    # Do not change this value. It defines the state version for compatibility.
+    home.stateVersion = "23.11"; 
+  };
 }

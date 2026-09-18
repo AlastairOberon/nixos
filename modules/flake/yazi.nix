@@ -1,8 +1,12 @@
-{ pkgs, ... }:
+{ pkgs, inputs, ... }:
 
 {
   programs.yazi = {
     enable = true;
+    # Fast, pre-compiled binary from official Nix cache (instant install on new machines):
+    package = pkgs.yazi;
+    # Bleeding-edge git main (compiles from source - uncomment if latest git features needed):
+    # package = inputs.yazi.packages.${pkgs.stdenv.hostPlatform.system}.default;
     
     # Declaratively fetch and install Yazi plugins
     plugins = {

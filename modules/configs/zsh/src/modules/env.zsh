@@ -1,34 +1,24 @@
-export PATH="$HOME/.local/bin:$PATH"
+# Ensure unique entries in PATH and LD_LIBRARY_PATH
+typeset -U PATH path LD_LIBRARY_PATH ld_library_path
 
-#External env files
-[[ -f ~/.local/bin/env ]] && source ~/.local/bin/env
+# XDG Base Directory Specification
+export XDG_CONFIG_HOME="${XDG_CONFIG_HOME:-$HOME/.config}"
+export XDG_DATA_HOME="${XDG_DATA_HOME:-$HOME/.local/share}"
+export XDG_STATE_HOME="${XDG_STATE_HOME:-$HOME/.local/state}"
+export XDG_CACHE_HOME="${XDG_CACHE_HOME:-$HOME/.cache}"
 
-#GO
-export PATH=$PATH:$(go env GOPATH)/bin
+# User binaries
+path=("$HOME/.local/bin" $path)
 
-#NVIM
-export XDG_DATA_HOME="$HOME/.local/share"
+# Go configuration (avoids slow subshell call to `go env GOPATH`)
+export GOPATH="${GOPATH:-$HOME/go}"
+path=($path "$GOPATH/bin")
 
-#QMLStuff
-export PATH=/usr/lib/qt6/bin:$PATH
-
-#Default Editor
+# Default Applications
 export EDITOR="nvim"
-
-#Zoxide
-eval "$(zoxide init zsh)"
-
-#CUDA/GPU
-
-export CUDA_HOME=/opt/cuda
-export PATH=$PATH:$CUDA_HOME/bin
-export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$CUDA_HOME/lib64
-
-#Browser
+export VISUAL="nvim"
 export BROWSER="zen-browser"
 
-#TensorFlow
-export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$PWD/.venv/lib/python3.12/site-packages/nvidia/cuda_runtime/lib/
+# Source external environment variables if present
+[[ -f "$HOME/.local/bin/env" ]] && source "$HOME/.local/bin/env"
 
-setopt INC_APPEND_HISTORY
-setopt SHARE_HISTORY

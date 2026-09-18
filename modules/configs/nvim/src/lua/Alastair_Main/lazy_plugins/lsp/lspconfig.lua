@@ -30,9 +30,14 @@ return {
                 vim.keymap.set("n", "gt", "<cmd>Telescope lsp_type_definitions<CR>", opts)
 
                 opts.desc = "See available code actions"
-                vim.keymap.set({ "n", "v" }, "<leader>vca", function()
-                    vim.lsp.buf.code_action()
-                end, opts)
+                vim.keymap.set({ "n", "v" }, "<leader>ca", vim.lsp.buf.code_action, opts)
+                vim.keymap.set({ "n", "v" }, "<leader>vca", vim.lsp.buf.code_action, opts)
+
+                opts.desc = "Go to previous diagnostic"
+                vim.keymap.set("n", "[d", vim.diagnostic.goto_prev, opts)
+
+                opts.desc = "Go to next diagnostic"
+                vim.keymap.set("n", "]d", vim.diagnostic.goto_next, opts)
 
                 opts.desc = "Smart rename"
                 vim.keymap.set("n", "<leader>rn", vim.lsp.buf.rename, opts)
@@ -52,6 +57,15 @@ return {
                 vim.keymap.set("i", "<C-h>", function()
                     vim.lsp.buf.signature_help()
                 end, opts)
+
+                local client = vim.lsp.get_client_by_id(ev.data.client_id)
+                if client and client.server_capabilities.inlayHintProvider and vim.lsp.inlay_hint then
+                    vim.keymap.set("n", "<leader>uh", function()
+                        local current = vim.lsp.inlay_hint.is_enabled({ bufnr = ev.buf })
+                        vim.lsp.inlay_hint.enable(not current, { bufnr = ev.buf })
+                        print("Inlay hints: " .. (not current and "Enabled" or "Disabled"))
+                    end, { buffer = ev.buf, desc = "Toggle Inlay Hints" })
+                end
             end,
         })
 
@@ -191,5 +205,19 @@ return {
         vim.lsp.enable("jsonls")   -- JSON
         vim.lsp.enable("marksman") -- Markdown
         vim.lsp.enable("bashls")   -- Bash/Shell scripts
+
+        -- Nix LSP (nil_ls or nixd)
+        vim.lsp.config("nil_ls", {
+            settings = {
+                ["nil"] = {
+                    formatting = { command = { "nixfmt" } },
+                },
+            },
+        })
+        if vim.fn.executable("nixd") == 1 then
+            vim.lsp.enable("nixd")
+        else
+            vim.lsp.enable("nil_ls")
+        end
     end,
 }
